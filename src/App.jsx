@@ -8,7 +8,6 @@ import Footer from './components/Footer';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import UserDashboard from './components/UserDashboard';
-import OwnerDashboard from './components/OwnerDashboard';
 import AdminDashboard from './components/AdminDashboard';
 import AdminBookings from './components/AdminBookings'; 
 import PropertyDashboard from './components/PropertyDashboard'; 
@@ -43,16 +42,15 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
 
-        {/* User & Owner Dashboards */}
+        {/* User Dashboard */}
         <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/owner-dashboard" element={<OwnerDashboard />} />
-        {/* === 2. ADMIN ROUTES WRAPPED IN LAYOUT === */}
+        
+        {/* === ADMIN/OWNER ROUTES WRAPPED IN LAYOUT === */}
         <Route element={<AdminLayout />}>
-            <Route path="/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/bookings" element={<AdminBookings />} />
-            <Route path="/admin/properties" element={<PropertyDashboard />} />
+          <Route path="/owner-dashboard" element={<AdminDashboard />} />
+          <Route path="/owner-dashboard/properties" element={<PropertyDashboard />} />
+          <Route path="/owner-dashboard/bookings" element={<AdminBookings />} />
         </Route>
-
       </Routes>
     </Router>
   );

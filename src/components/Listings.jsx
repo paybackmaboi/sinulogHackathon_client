@@ -1,69 +1,106 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { motion } from 'framer-motion';
 
 const Listings = () => {
   const [properties, setProperties] = useState([]);
-  const [selectedProp, setSelectedProp] = useState(null); // For modal
-  const [bookForm, setBookForm] = useState({ customerName: '', contactNumber: '', bookingDate: '' });
+
+  // Static fallback data matching the design
+  const staticProperties = [
+    {
+      id: 1,
+      title: "Modern City Loft",
+      location: "New York, USA",
+      price: 185,
+      rating: 4.92,
+      imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470"
+    },
+    {
+      id: 2,
+      title: "Oceanfront Villa",
+      location: "Malibu, California",
+      price: 450,
+      rating: 4.98,
+      imageUrl: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=1470"
+    },
+    {
+      id: 3,
+      title: "Alpine Cabin",
+      location: "Aspen, Colorado",
+      price: 280,
+      rating: 4.85,
+      imageUrl: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1470"
+    },
+    {
+      id: 4,
+      title: "Skyline Penthouse",
+      location: "Tokyo, Japan",
+      price: 620,
+      rating: 5.0,
+      imageUrl: "https://images.unsplash.com/photo-1512918760383-5658fc14bc63?q=80&w=1470"
+    }
+  ];
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/properties').then(res => setProperties(res.data));
+    // Attempt to fetch from API, otherwise use static data
+    axios.get('http://localhost:5000/api/properties')
+      .then(res => {
+        if (res.data && res.data.length > 0) {
+            // Map API data to new design structure if necessary
+            setProperties(res.data);
+        } else {
+            setProperties(staticProperties);
+        }
+      })
+      .catch(() => setProperties(staticProperties));
   }, []);
 
-  const submitBooking = async (e) => {
-    e.preventDefault();
-    await axios.post('http://localhost:5000/api/bookings', {
-      ...bookForm,
-      propertyTitle: selectedProp.title
-    });
-    alert("Booking Request Sent!");
-    setSelectedProp(null);
-  };
-
   return (
-    <section id="listings" className="py-20 bg-brand-dark relative">
-      <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-4xl font-bold mb-12 text-center text-white">Available Spaces</h2>
-        
-        {/* Category Filters could go here */}
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {properties.map((prop, i) => (
-            <motion.div key={prop.id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700">
-              <div className="h-48 overflow-hidden relative">
-                <span className="absolute top-2 right-2 bg-black/70 px-2 py-1 text-xs rounded text-white z-10">{prop.category}</span>
-                <img src={prop.imageUrl} alt={prop.title} className="w-full h-full object-cover" />
-              </div>
-              <div className="p-6">
-                <h3 className="text-xl font-bold mb-2">{prop.title}</h3>
-                <p className="text-brand-gold font-bold text-lg">₱ {prop.price}</p>
-                <button onClick={() => setSelectedProp(prop)} className="mt-4 w-full py-2 bg-brand-gold text-black font-bold rounded hover:bg-yellow-500 transition">
-                  Book Now
-                </button>
-              </div>
-            </motion.div>
-          ))}
+    <section className="w-full max-w-[1280px] px-4 sm:px-10 py-16 mx-auto">
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h2 className="text-[#111418] dark:text-white text-3xl font-bold leading-tight tracking-tight">Top-Rated Stays</h2>
+          <p className="text-[#617589] dark:text-gray-400 mt-2 text-lg">Explore some of the most loved homes around the globe.</p>
         </div>
+        <a className="hidden sm:flex items-center gap-1 text-primary font-bold hover:underline" href="#">
+          View all <span className="material-symbols-outlined text-sm">arrow_forward_ios</span>
+        </a>
       </div>
 
-      {/* Booking Modal */}
-      {selectedProp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-gray-800 p-6 rounded-xl w-full max-w-md border border-brand-gold">
-            <h3 className="text-xl font-bold mb-4">Book: {selectedProp.title}</h3>
-            <form onSubmit={submitBooking}>
-              <input required placeholder="Your Name" className="w-full p-2 mb-3 bg-gray-700 rounded" onChange={e => setBookForm({...bookForm, customerName: e.target.value})} />
-              <input required placeholder="Contact Number" className="w-full p-2 mb-3 bg-gray-700 rounded" onChange={e => setBookForm({...bookForm, contactNumber: e.target.value})} />
-              <input required type="date" className="w-full p-2 mb-4 bg-gray-700 rounded text-white" onChange={e => setBookForm({...bookForm, bookingDate: e.target.value})} />
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setSelectedProp(null)} className="w-1/2 py-2 bg-gray-600 rounded">Cancel</button>
-                <button type="submit" className="w-1/2 py-2 bg-brand-gold text-black font-bold rounded">Confirm</button>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {properties.map((prop) => (
+          <div key={prop.id} className="group flex flex-col gap-3 cursor-pointer">
+            <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden shadow-sm">
+              <div className="absolute top-3 right-3 z-10 p-2 bg-white/80 backdrop-blur-sm rounded-full text-gray-500 hover:text-red-500 transition-colors">
+                <span className="material-symbols-outlined block text-[20px]">favorite</span>
               </div>
-            </form>
+              <div 
+                className="w-full h-full bg-gray-200 group-hover:scale-110 transition-transform duration-500 ease-out bg-cover bg-center" 
+                style={{ backgroundImage: `url('${prop.imageUrl}')` }}
+              ></div>
+            </div>
+            <div className="flex flex-col gap-1">
+              <div className="flex justify-between items-start">
+                <h3 className="text-[#111418] dark:text-white text-lg font-bold leading-tight group-hover:text-primary transition-colors">
+                  {prop.title}
+                </h3>
+                <div className="flex items-center gap-1 text-[#111418] dark:text-white font-medium text-sm">
+                  <span className="material-symbols-outlined text-primary text-base">star</span>
+                  {prop.rating || "4.9"}
+                </div>
+              </div>
+              <p className="text-[#617589] dark:text-gray-400 text-sm">{prop.location || "City, Country"}</p>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className="text-[#111418] dark:text-white font-bold text-lg">${prop.price}</span>
+                <span className="text-[#617589] dark:text-gray-400 text-sm">/ night</span>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      <div className="mt-8 flex justify-center sm:hidden">
+        <button className="px-6 py-3 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-white w-full">View all stays</button>
+      </div>
     </section>
   );
 };

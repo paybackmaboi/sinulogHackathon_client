@@ -1,24 +1,33 @@
 import React from 'react';
-import { FaBuilding } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   return (
-    <nav className="fixed w-full z-50 bg-brand-dark/80 backdrop-blur-md border-b border-gray-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center">
-            <FaBuilding className="text-brand-gold text-2xl" />
-            <span className="ml-2 text-xl font-bold tracking-wider text-white">
-              Cebu<span className="text-brand-gold">Estate</span>
-            </span>
+    <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-[#f0f2f4] dark:bg-[#111418]/95 dark:border-[#293038] transition-colors duration-300">
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-10 py-3 flex items-center justify-between">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 cursor-pointer select-none">
+          <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+            <span className="material-symbols-outlined text-2xl">apartment</span>
           </div>
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              <a href="/#home" className="hover:text-brand-gold px-3 py-2 rounded-md text-sm font-medium">Home</a>
-              <a href="/#listings" className="hover:text-brand-gold px-3 py-2 rounded-md text-sm font-medium">Properties</a>
-              <a href="#ai-tools" className="bg-brand-gold text-brand-dark hover:bg-yellow-500 px-3 py-2 rounded-md text-sm font-bold">AI Architect</a>
-            </div>
-          </div>
+          <h2 className="text-[#111418] dark:text-white text-xl font-bold tracking-tight">EstateBook</h2>
+        </Link>
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-8">
+          <a className="text-[#111418] dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">List Property</a>
+          <a className="text-[#111418] dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">Stays</a>
+          <a className="text-[#111418] dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">Experiences</a>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-3">
+          <Link to="/login" className="hidden sm:flex h-10 px-4 items-center justify-center rounded-lg text-[#111418] dark:text-white text-sm font-bold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            Log In
+          </Link>
+          <Link to="/signup" className="flex h-10 px-6 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:-translate-y-0.5">
+            Sign Up
+          </Link>
         </div>
       </div>
     </nav>
