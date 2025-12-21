@@ -8,6 +8,7 @@
   import Footer from './components/Footer';
   import Login from './components/Login';
   import SignUp from './components/SignUp';
+  import PublicListings from './components/PublicListings';
 
   // User Components
   import UserLayout from './components/UserLayout'; // Newly created layout
@@ -57,6 +58,7 @@
         <Routes>
           {/* === PUBLIC ROUTES === */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/listings" element={<PublicListings />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
 

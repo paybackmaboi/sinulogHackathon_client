@@ -1,94 +1,80 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore'; 
+import { db } from '../firebase';
 
 const Explore = () => {
-  // Data for the grid to keep JSX clean
-  const properties = [
-    {
-        title: "Mango Ave Frontage",
-        location: "Cebu City, Philippines",
-        desc: "Perfect for food stalls or viewing decks.",
-        price: "$150",
-        unit: "/ day",
-        rating: "4.9",
-        image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&q=80&w=600",
-        badge: "Sinulog Ready",
-        badgeColor: "bg-primary text-surface-dark",
-        guests: "10+"
-    },
-    {
-        title: "IT Park Condo",
-        location: "Lahug, Cebu City",
-        desc: "Walking distance to nightlife.",
-        price: "$45",
-        unit: "/ night",
-        rating: "4.8",
-        reviews: "(120)",
-        image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&q=80&w=600",
-    },
-    {
-        title: "Secure Gated Driveway",
-        location: "Guadalupe, Cebu City",
-        desc: "Fits 2 SUVs. 24/7 Security.",
-        price: "$15",
-        unit: "/ day",
-        rating: "5.0",
-        image: "https://images.unsplash.com/photo-1621293954908-bae9d00c9c65?auto=format&fit=crop&q=80&w=600",
-        badge: "Parking Spot",
-        badgeColor: "bg-blue-600 text-white"
-    },
-    {
-        title: "Backyard Oasis",
-        location: "Busay, Cebu",
-        desc: "Scenic view, tent pitching allowed.",
-        price: "$25",
-        unit: "/ night",
-        rating: "4.5",
-        image: "https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&q=80&w=600",
-        badge: "Camping / Lawn",
-        badgeColor: "bg-green-700 text-white"
-    },
-    {
-        title: "Mountain View Villa",
-        location: "Balamban, Cebu",
-        desc: "Private pool, 4 bedrooms.",
-        price: "$220",
-        unit: "/ night",
-        rating: "4.95",
-        reviews: "(42)",
-        image: "https://images.unsplash.com/photo-1613977257363-707ba9348227?auto=format&fit=crop&q=80&w=600",
-    },
-    {
-        title: "City Center Loft",
-        location: "Fuente Osmeña, Cebu City",
-        desc: "Direct view of the parade.",
-        price: "$300",
-        unit: "/ night",
-        rating: "4.7",
-        image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&q=80&w=600",
-        badge: "Sinulog Ready",
-        badgeColor: "bg-primary text-surface-dark"
-    },
-    {
-        title: "Seaside Bungalow",
-        location: "Moalboal, Cebu",
-        desc: "Beachfront, snorkeling area.",
-        price: "$85",
-        unit: "/ night",
-        rating: "4.88",
-        image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?auto=format&fit=crop&q=80&w=600",
-    },
-    {
-        title: "Modern Function Hall",
-        location: "Mandaue City, Cebu",
-        desc: "For parties and gatherings.",
-        price: "$400",
-        unit: "/ day",
-        rating: "5.0",
-        image: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=600",
-        badge: "Event Space",
-        badgeColor: "bg-purple-600 text-white"
-    }
-  ];
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // 1. Reference the 'properties' collection in Firestore
+        const propertiesCollection = collection(db, "properties");
+        
+        // 2. Get the data (Snapshot)
+        const snapshot = await getDocs(propertiesCollection);
+        
+        // 3. Map the data to an array
+        const propertyList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        // 4. Transform data to match the expected format for the Explore component
+        const transformedProperties = propertyList.map(prop => ({
+          title: prop.title || "Untitled Property",
+          location: prop.location || "Unknown Location",
+          desc: prop.desc || "No description available",
+          price: prop.price ? `$${prop.price}` : "$0",
+          unit: prop.category === 'Driveways' || prop.category === 'Lawns' ? "/ day" : "/ night",
+          rating: prop.rating || "New",
+          image: prop.imageUrl || "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470",
+          badge: getBadgeForCategory(prop.category),
+          badgeColor: getBadgeColorForCategory(prop.category),
+          guests: prop.guests || "2+"
+        }));
+
+        // 5. Use only what's in Firebase - no mock data fallback
+        setProperties(transformedProperties);
+        console.log("Loaded from Firebase:", transformedProperties);
+
+      } catch (error) {
+        console.error("Error connecting to Firebase:", error);
+        setError("Failed to load properties. Please try again later.");
+        setProperties([]); // Clear properties on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
+
+  // Helper functions for badge assignment
+  const getBadgeForCategory = (category) => {
+    const badgeMap = {
+      'Driveways': 'Parking Spot',
+      'Lawns': 'Camping / Lawn',
+      'Frontage': 'Food Stall Frontage',
+      'House': 'Sinulog Ready'
+    };
+    return badgeMap[category] || null;
+  };
+
+  const getBadgeColorForCategory = (category) => {
+    const colorMap = {
+      'Driveways': 'bg-blue-600 text-white',
+      'Lawns': 'bg-green-700 text-white',
+      'Frontage': 'bg-primary text-surface-dark',
+      'House': 'bg-primary text-surface-dark'
+    };
+    return colorMap[category] || null;
+  };
 
   return (
     <div className="p-6 lg:p-10">
@@ -166,7 +152,7 @@ const Explore = () => {
         
         {/* Results Info Bar */}
         <div className="flex items-center justify-between">
-          <p className="text-text-secondary text-sm"><span className="text-white font-bold">142</span> properties found in Cebu</p>
+          <p className="text-text-secondary text-sm"><span className="text-white font-bold">{properties.length}</span> properties found in Cebu</p>
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 text-text-secondary hover:text-white text-sm font-medium transition-colors">
               <span className="material-symbols-outlined text-lg">tune</span> Filters
@@ -182,6 +168,34 @@ const Explore = () => {
             </div>
           </div>
         </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="col-span-full flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p className="ml-4 text-white">Loading properties...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="col-span-full bg-red-900/20 border border-red-900 rounded-lg p-4 flex items-center gap-3">
+            <span className="material-symbols-outlined text-red-400">error</span>
+            <p className="text-red-300 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Empty State - No properties listed yet */}
+        {!loading && !error && properties.length === 0 && (
+          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+            <div className="bg-primary/10 p-6 rounded-full mb-4">
+              <span className="material-symbols-outlined text-primary text-6xl">home_work</span>
+            </div>
+            <h3 className="text-white text-xl font-bold mb-2">No Properties Available Yet</h3>
+            <p className="text-text-secondary mb-4">Property owners haven't listed any properties yet.</p>
+            <p className="text-text-secondary text-sm">Check back later or contact property owners to list their spaces.</p>
+          </div>
+        )}
 
         {/* Property Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -233,16 +247,18 @@ const Explore = () => {
 
         {/* Pagination / Load More */}
         <div className="flex flex-col items-center gap-4 py-8">
-            <p className="text-text-secondary text-sm">Showing 8 of 142 properties</p>
+            <p className="text-text-secondary text-sm">Showing {Math.min(properties.length, 8)} of {properties.length} properties</p>
             <div className="flex items-center gap-2">
                 <div className="h-1 w-20 bg-[#3a3527] rounded-full overflow-hidden">
                     <div className="h-full w-1/4 bg-primary rounded-full"></div>
                 </div>
             </div>
+            {properties.length > 8 && (
             <button className="bg-[#3a3527] hover:bg-[#554e3a] text-white font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105 shadow-lg flex items-center gap-2 mt-2">
                 <span>Load More Properties</span>
                 <span className="material-symbols-outlined">expand_more</span>
             </button>
+            )}
         </div>
         <div className="h-10"></div>
       </div>

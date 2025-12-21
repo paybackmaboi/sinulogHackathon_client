@@ -15,7 +15,7 @@ const Header = () => {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8">
-          <a className="text-[#111418] dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">List Property</a>
+          <Link to="/listings" className="text-[#111418] dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors">Browse Listings</Link>
           <a className="text-[#111418] dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">Stays</a>
           <a className="text-[#111418] dark:text-gray-200 text-sm font-medium hover:text-primary transition-colors" href="#">Experiences</a>
         </div>
