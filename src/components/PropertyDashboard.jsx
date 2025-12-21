@@ -1,124 +1,164 @@
 import React, { useState, useEffect } from 'react';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from '../firebase'; 
 
 const PropertyDashboard = () => {
-  const [activeTab, setActiveTab] = useState('Driveways');
+  // State for logic
+  const [activeTab, setActiveTab] = useState('All');
+  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+
+  // Form State
+  const [newListing, setNewListing] = useState({
+    title: '',
+    price: '',
+    location: '',
+    category: 'Driveways', // Default category
+    imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470'
+  });
+
+  // === 1. FIREBASE FETCH LOGIC ===
+  const fetchMyProperties = async (user) => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const q = query(collection(db, "properties"), where("ownerId", "==", user.uid));
+      const querySnapshot = await getDocs(q);
+      const props = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setListings(props);
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    console.log('PropertyDashboard component mounted!');
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchMyProperties(user);
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Mock Data
-  const stats = [
-    { title: "Active Sinulog Listings", value: "12", icon: "holiday_village", trend: "+2 added this week", trendColor: "text-[#078834]", trendIcon: "trending_up" },
-    { title: "Pending Bookings", value: "4", icon: "pending_actions", trend: "Action required", trendColor: "text-[#e89c30]", trendIcon: "priority_high" },
-    { title: "Total Earnings", value: "₱ 45,000", icon: "payments", trend: "+15% vs last year", trendColor: "text-[#078834]", trendIcon: "trending_up" },
-  ];
+  // === 2. ADD LISTING LOGIC ===
+  const handleAddListing = async (e) => {
+    e.preventDefault();
+    if (!auth.currentUser) return alert("You must be logged in!");
 
-  const listings = [
-    { 
-      id: 1, 
-      title: "Capitol Site Driveway", 
-      price: "₱500", 
-      location: "Near Fuente Osmeña", 
-      status: "ACTIVE", 
-      statusColor: "bg-green-100 text-green-800 border-green-200", 
-      rating: "4.8", 
-      specs: [{ icon: "directions_car", text: "2 Slots" }, { icon: "videocam", text: "CCTV" }], 
-      imgUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuAyBEf8lQNwDLPCXhkprGGUvTqbo20VA9l0PJ8KdGk9aiQPdBFtD4_As-5YqgjbVdc-YFLdovoh4qaF7pEaZbZgOj7GKpynOFpF4lTFKLbmzapLE4Ul8wkzUv-0zWztiHjm5QFoa2uMb36ZburiOl0cb7jRrIlBdhylvV1NHOGUyGIsioUifminTxRcpSub1Wm0H8i9XcSf6kQmosdd9nhVBCP148P7e08PQBBpbWLNyg5X3-vg9-WJgxwS4WoLQ3a8qGbXfEVziAQu", 
-      opacity: "opacity-100",
-      category: "Driveways"
-    },
-    { 
-      id: 2, 
-      title: "Juana Osmeña Lawn", 
-      price: "₱1,200", 
-      location: "Mango Avenue Area", 
-      status: "PENDING REVIEW", 
-      statusColor: "bg-orange-100 text-orange-800 border-orange-200", 
-      rating: null, 
-      specs: [{ icon: "camping", text: "4 Tents" }, { icon: "water_drop", text: "Water Access" }], 
-      imgUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuC8HtwBl9exOKs6Jis_9cT9MlIBL8yeCJjfXn7lJmFw3vJbDazep5Z8vLTluTkvTy6jfiR0IHXOsAhYjdpO_kXtqM7BT3LpyaMPpgN6QheuxcSpHo_8FcySqmUDMhkcAUszgfup6UfSuBRKtztR0TvlmW8UeZ3GglYZJK7p2Ca8m7szzrpN7BMA1Dl5BSnv9QgUnBbHoXp5Pr9dF-Zu2sEXro4P9151ckFPdBD2u2T6cG67QAFalMmVFv7Gpftn9Sf31tQcid3eL0P8", 
-      opacity: "opacity-100",
-      category: "Lawns"
-    },
-    { 
-      id: 3, 
-      title: "Mango Ave Frontage", 
-      price: "₱5,000", 
-      location: "Prime Parade Route", 
-      status: "FULLY BOOKED", 
-      statusColor: "bg-[#111718] text-white", 
-      isBooked: true, 
-      specs: [{ icon: "storefront", text: "Food Stall" }, { icon: "bolt", text: "Electric" }], 
-      imgUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuALTIOsRfoffwHIWVUCZSbGYHwcqSva6uBuY3veS6fJhAbYUoHh7PLj6pJtaj0NpvGbMe5QPieepYCv8lyzlxE8BaO-218OiIUhqbK9fpP9oIrSRNLdDA6xIfH81wC9NYbdPI0mQ51NVrbMUev8aOTCPSMg_8rgk4A7wAvhcEgD9DRC1hqukQREAv6XCLBcs48MNsou4uaGp4MTw6jh_vqtJv7CXVkuGaIJqPSB3-Z_z1mwuREqXk5YS_pj7hJHTHMhUvYl1RlnE-Aa", 
-      opacity: "opacity-80",
-      category: "Frontage"
+    try {
+      await addDoc(collection(db, "properties"), {
+        ...newListing,
+        ownerId: auth.currentUser.uid,
+        status: "ACTIVE",
+        rating: "New",
+        specs: [{ icon: "verified", text: "Verified Owner" }], // Default spec
+        createdAt: new Date().toISOString()
+      });
+
+      setShowAddModal(false);
+      fetchMyProperties(auth.currentUser);
+      alert("Property Added Successfully!");
+      
+      // Reset form
+      setNewListing({
+        title: '',
+        price: '',
+        location: '',
+        category: 'Driveways',
+        imageUrl: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=1470'
+      });
+    } catch (error) {
+      console.error("Error adding property:", error);
+      alert("Failed to add property");
     }
-  ];
+  };
 
-  // Filter listings based on active tab (Optional logic, removing if you want to see all)
-  // const filteredListings = listings.filter(l => l.category === activeTab); 
+  // === 3. FILTERING LOGIC ===
+  // If tab is 'All', show everything. Otherwise, match the category.
+  const filteredListings = activeTab === 'All' 
+    ? listings 
+    : listings.filter(item => item.category === activeTab);
+
+  // === DATA FOR TABS ===
+  const tabs = [
+    { name: 'All', label: 'All Listings', icon: 'apps' },
+    { name: 'Driveways', label: 'Driveways', icon: 'directions_car' },
+    { name: 'Lawns', label: 'Lawns', icon: 'camping' },
+    { name: 'Frontage', label: 'Frontage', icon: 'storefront' },
+    { name: 'House', label: 'Whole House', icon: 'home' }
+  ];
 
   return (
     <div className="flex flex-col w-full gap-6 relative z-10">
       
       {/* Header */}
-      <header className="flex flex-wrap justify-between items-end gap-4 pb-4 border-b border-[#dbe4e6]">
+      <header className="flex flex-wrap justify-between items-end gap-4 pb-4 border-b border-[#dbe4e6] dark:border-gray-700">
         <div className="flex flex-col gap-1">
-          {/* Fixed Text Color for Light Theme */}
-          <h1 className="text-[#111718] text-3xl font-extrabold leading-tight tracking-[-0.033em]">Property Management</h1>
-          <p className="text-[#618389] text-base font-normal">Manage your short-term rentals for Sinulog week.</p>
+          <h1 className="text-[#111718] dark:text-white text-3xl font-extrabold leading-tight">Property Management</h1>
+          <p className="text-[#618389] dark:text-gray-400 text-base font-normal">Manage your short-term rentals for Sinulog week.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex cursor-pointer items-center justify-center gap-2 rounded-lg h-10 px-4 border border-[#dbe4e6] bg-white text-[#111718] text-sm font-bold hover:bg-background-light transition-colors shadow-sm">
-            <span className="material-symbols-outlined text-lg">download</span>
-            <span>Export Report</span>
-          </button>
-          <button className="flex cursor-pointer items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-[#111718] text-sm font-bold hover:bg-[#0ebcdb] transition-colors shadow-md shadow-primary/20">
+           <button 
+            onClick={() => setShowAddModal(true)}
+            className="flex cursor-pointer items-center justify-center gap-2 rounded-lg h-10 px-4 bg-[#137fec] text-white text-sm font-bold hover:bg-[#0ebcdb] transition-colors shadow-md"
+          >
             <span className="material-symbols-outlined text-lg">add_location_alt</span>
             <span>Add New Listing</span>
           </button>
         </div>
       </header>
 
-      {/* Stats Overview */}
+      {/* Stats Overview (Static for visual appeal, dynamic count for Active Listings) */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="flex flex-col gap-2 rounded-xl p-6 border border-[#dbe4e6] bg-white shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex flex-col gap-2 rounded-xl p-6 border border-[#dbe4e6] dark:border-gray-700 bg-white dark:bg-[#1a2632] shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-[#618389] text-sm font-bold uppercase tracking-wider">{stat.title}</p>
-              <span className="material-symbols-outlined text-[#618389]">{stat.icon}</span>
+              <p className="text-[#618389] dark:text-gray-400 text-sm font-bold uppercase tracking-wider">Total Listings</p>
+              <span className="material-symbols-outlined text-[#618389]">holiday_village</span>
             </div>
-            <p className="text-[#111718] text-3xl font-black leading-tight">{stat.value}</p>
-            <div className={`flex items-center gap-1 ${stat.trendColor} text-sm font-medium`}>
-              <span className="material-symbols-outlined text-sm">{stat.trendIcon}</span>
-              <span>{stat.trend}</span>
+            <p className="text-[#111718] dark:text-white text-3xl font-black leading-tight">{listings.length}</p>
+            <p className="text-green-600 text-sm font-medium flex items-center gap-1"><span className="material-symbols-outlined text-sm">trending_up</span> Active</p>
+        </div>
+        <div className="flex flex-col gap-2 rounded-xl p-6 border border-[#dbe4e6] dark:border-gray-700 bg-white dark:bg-[#1a2632] shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-[#618389] dark:text-gray-400 text-sm font-bold uppercase tracking-wider">Pending Bookings</p>
+              <span className="material-symbols-outlined text-[#618389]">pending_actions</span>
             </div>
-          </div>
-        ))}
+            <p className="text-[#111718] dark:text-white text-3xl font-black leading-tight">0</p>
+            <p className="text-orange-500 text-sm font-medium flex items-center gap-1"><span className="material-symbols-outlined text-sm">priority_high</span> Action required</p>
+        </div>
+        <div className="flex flex-col gap-2 rounded-xl p-6 border border-[#dbe4e6] dark:border-gray-700 bg-white dark:bg-[#1a2632] shadow-sm">
+            <div className="flex items-center justify-between">
+              <p className="text-[#618389] dark:text-gray-400 text-sm font-bold uppercase tracking-wider">Total Earnings</p>
+              <span className="material-symbols-outlined text-[#618389]">payments</span>
+            </div>
+            <p className="text-[#111718] dark:text-white text-3xl font-black leading-tight">₱ 0</p>
+            <p className="text-green-600 text-sm font-medium flex items-center gap-1"><span className="material-symbols-outlined text-sm">trending_up</span> Start earning</p>
+        </div>
       </section>
 
       {/* Listings Management Area */}
-      <section className="flex flex-col gap-4 border border-[#dbe4e6] rounded-xl bg-white shadow-sm overflow-hidden">
+      <section className="flex flex-col gap-4 border border-[#dbe4e6] dark:border-gray-700 rounded-xl bg-white dark:bg-[#1a2632] shadow-sm overflow-hidden min-h-[400px]">
         
-        {/* Tabs - Enhanced Visibility */}
-        <div className="border-b border-[#dbe4e6] bg-background-light/30 px-6 pt-4">
+        {/* === TABS SECTION === */}
+        <div className="border-b border-[#dbe4e6] dark:border-gray-700 bg-gray-50 dark:bg-gray-800/30 px-6 pt-4">
           <div className="flex gap-8 overflow-x-auto">
-            {[
-              { name: 'Driveways', label: 'Driveways (Parking)', icon: 'directions_car' },
-              { name: 'Lawns', label: 'Lawns (Camping)', icon: 'camping' },
-              { name: 'Frontage', label: 'Frontage (Vendors)', icon: 'storefront' }
-            ].map((tab) => (
+            {tabs.map((tab) => (
               <button 
                 key={tab.name}
                 onClick={() => setActiveTab(tab.name)}
                 className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 transition-all whitespace-nowrap ${
                   activeTab === tab.name 
-                    ? 'border-primary text-[#111718]' 
-                    : 'border-transparent text-[#618389] hover:text-[#111718] hover:border-[#dbe4e6]'
+                    ? 'border-[#137fec] text-[#137fec]' 
+                    : 'border-transparent text-[#618389] hover:text-[#111718] dark:text-gray-400 dark:hover:text-white'
                 }`}
               >
-                <span className={`material-symbols-outlined ${activeTab === tab.name ? 'text-primary fill-current' : ''}`}>
+                <span className={`material-symbols-outlined ${activeTab === tab.name ? 'fill-current' : ''}`}>
                   {tab.icon}
                 </span>
                 <p className="text-sm font-bold">{tab.label}</p>
@@ -127,87 +167,107 @@ const PropertyDashboard = () => {
           </div>
         </div>
 
-        {/* Filters Bar */}
-        <div className="flex flex-wrap items-center gap-4 px-6 py-4 bg-white border-b border-[#dbe4e6]">
-            <div className="relative flex-1 min-w-[200px]">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-[#618389]">search</span>
-                <input 
-                    className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[#dbe4e6] text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-[#111718] placeholder-[#618389]" 
-                    placeholder="Search properties..." 
-                    type="text"
-                />
-            </div>
-            <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-[#618389]">Sort by:</span>
-                <select className="pl-3 pr-8 py-2 rounded-lg border border-[#dbe4e6] text-sm text-[#111718] bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none cursor-pointer">
-                    <option>Newest First</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                </select>
-            </div>
-        </div>
-
         {/* Listings Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-          {listings.map((listing) => (
-            <div key={listing.id} className={`group flex flex-col rounded-xl border border-[#dbe4e6] overflow-hidden hover:shadow-lg transition-all bg-white ${listing.opacity}`}>
-              
-              {/* Image Area */}
-              <div className={`relative h-48 bg-gray-200 ${listing.isBooked ? 'grayscale' : ''}`}>
-                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style={{ backgroundImage: `url("${listing.imgUrl}")` }}></div>
+          {loading ? (
+             <p className="col-span-full text-center py-10 text-gray-500 animate-pulse">Loading properties...</p>
+          ) : filteredListings.length > 0 ? (
+            filteredListings.map((listing) => (
+              <div key={listing.id} className="group flex flex-col rounded-xl border border-[#dbe4e6] dark:border-gray-700 overflow-hidden hover:shadow-lg transition-all bg-white dark:bg-[#1a2632]">
                 
-                {/* Status Badges */}
-                <div className={`absolute top-3 right-3 text-xs font-bold px-2 py-1 rounded-md shadow-sm uppercase tracking-wider ${listing.statusColor}`}>
-                  {listing.status}
-                </div>
-                
-                {/* Rating Badge */}
-                {!listing.isBooked && listing.rating && (
-                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm text-[#111718] text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
-                        <span className="material-symbols-outlined text-sm text-yellow-500 fill-current">star</span> {listing.rating}
-                    </div>
-                )}
-              </div>
-              
-              {/* Content Area */}
-              <div className="p-4 flex flex-col gap-3 flex-1">
-                <div>
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-bold text-lg text-[#111718] leading-tight">{listing.title}</h3>
-                    <div className="font-bold text-[#111718]">{listing.price}<span className="text-[#618389] text-xs font-normal">/day</span></div>
+                {/* Image Area */}
+                <div className="relative h-48 bg-gray-200">
+                  <div className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style={{ backgroundImage: `url("${listing.imageUrl}")` }}></div>
+                  
+                  {/* Status Badges */}
+                  <div className="absolute top-3 right-3 text-xs font-bold px-2 py-1 rounded-md shadow-sm uppercase tracking-wider bg-green-100 text-green-800">
+                    {listing.status}
                   </div>
-                  <p className="text-[#618389] text-sm mt-1 flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">location_on</span> {listing.location}
-                  </p>
+                  <div className="absolute top-3 left-3 text-xs font-bold px-2 py-1 rounded-md shadow-sm bg-white/90 text-black">
+                    {listing.category}
+                  </div>
                 </div>
                 
-                {/* Specs/Features */}
-                <div className="flex items-center gap-2 text-xs text-[#618389] font-medium bg-background-light p-2 rounded-lg">
-                    {listing.specs.map((spec, i) => (
-                        <React.Fragment key={i}>
-                            <div className="flex items-center gap-1">
-                                <span className="material-symbols-outlined text-sm">{spec.icon}</span> 
-                                {spec.text}
-                            </div>
-                            {i < listing.specs.length - 1 && <span className="w-1 h-1 rounded-full bg-[#dbe4e6]"></span>}
-                        </React.Fragment>
-                    ))}
-                </div>
-
-                {/* Actions */}
-                <div className="mt-auto pt-2 flex gap-2">
-                  <button className="flex-1 py-2 px-3 rounded-lg border border-[#dbe4e6] text-[#111718] text-sm font-bold hover:bg-background-light transition-colors">
-                    {listing.isBooked ? 'View Details' : 'Manage'}
-                  </button>
-                  <button className="py-2 px-3 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors border border-transparent">
-                    <span className="material-symbols-outlined text-lg">edit</span>
-                  </button>
+                {/* Content Area */}
+                <div className="p-4 flex flex-col gap-3 flex-1">
+                  <div>
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-bold text-lg text-[#111718] dark:text-white leading-tight">{listing.title}</h3>
+                      <div className="font-bold text-[#137fec] text-lg">₱{listing.price}<span className="text-[#618389] text-xs font-normal">/night</span></div>
+                    </div>
+                    <p className="text-[#618389] text-sm mt-1 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">location_on</span> {listing.location}
+                    </p>
+                  </div>
+                  
+                  {/* Actions */}
+                  <div className="mt-auto pt-2 flex gap-2">
+                    <button className="flex-1 py-2 px-3 rounded-lg border border-[#dbe4e6] dark:border-gray-600 text-[#111718] dark:text-white text-sm font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      Manage
+                    </button>
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+                <span className="material-symbols-outlined text-5xl text-gray-300 mb-2">folder_open</span>
+                <p className="text-gray-500">No properties found in "{activeTab}".</p>
+                {activeTab !== 'All' && (
+                  <button onClick={() => setActiveTab('All')} className="text-[#137fec] font-bold text-sm mt-2 hover:underline">View All</button>
+                )}
             </div>
-          ))}
+          )}
         </div>
       </section>
+
+      {/* === ADD LISTING MODAL === */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#1a2632] rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-700">
+            <h2 className="text-xl font-bold mb-4 text-[#111418] dark:text-white">Add New Property</h2>
+            <form onSubmit={handleAddListing} className="flex flex-col gap-3">
+              <input 
+                placeholder="Title (e.g. Spacious Driveway)" 
+                className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                value={newListing.title}
+                onChange={e => setNewListing({...newListing, title: e.target.value})}
+                required
+              />
+              <input 
+                placeholder="Price per night (e.g. 500)" 
+                type="number"
+                className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                value={newListing.price}
+                onChange={e => setNewListing({...newListing, price: e.target.value})}
+                required
+              />
+              <input 
+                placeholder="Location (e.g. Near Mango Ave)" 
+                className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                value={newListing.location}
+                onChange={e => setNewListing({...newListing, location: e.target.value})}
+                required
+              />
+              {/* This dropdown matches the Tabs exactly */}
+              <select 
+                className="border p-2 rounded dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                value={newListing.category}
+                onChange={e => setNewListing({...newListing, category: e.target.value})}
+              >
+                <option value="Driveways">Driveway</option>
+                <option value="Lawns">Lawn</option>
+                <option value="Frontage">Frontage</option>
+                <option value="House">Whole House</option>
+              </select>
+              <div className="flex justify-end gap-2 mt-4">
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-[#137fec] hover:bg-blue-600 text-white font-bold rounded transition">Save Listing</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
