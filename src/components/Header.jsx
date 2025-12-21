@@ -10,7 +10,7 @@ const Header = () => {
           <div className="size-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
             <span className="material-symbols-outlined text-2xl">apartment</span>
           </div>
-          <h2 className="text-[#111418] dark:text-white text-xl font-bold tracking-tight">EstateBook</h2>
+          <h2 className="text-[#111418] dark:text-white text-xl font-bold tracking-tight">GO4thBook</h2>
         </Link>
 
         {/* Desktop Menu */}

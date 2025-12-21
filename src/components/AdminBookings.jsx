@@ -1,449 +1,307 @@
-import React, { useEffect, useState } from 'react';
-import { getAllBookings, updateBookingStatus } from '../api/bookingService';
+import React, { useState } from 'react';
 
 const AdminBookings = () => {
-  const [bookings, setBookings] = useState([]);
-  const [selectedBooking, setSelectedBooking] = useState(null);
+  // Mock Data
+  const mockBookings = [
+    { id: 1, propertyTitle: "Capitol Site Prime Driveway", customerName: "Juan Dela Cruz", date: "Jan 15 - Jan 21", status: "Pending", price: 3500, img: "https://images.unsplash.com/photo-1605283176568-9b41fde3672e?auto=format&fit=crop&q=80&w=1000" },
+    { id: 2, propertyTitle: "IT Park Loft Secure Spot", customerName: "Maria Clara", date: "Feb 02 - Feb 05", status: "Confirmed", price: 2100, img: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=1000" },
+    { id: 3, propertyTitle: "Ayala Center Basement", customerName: "Jose Rizal", date: "Jan 10 - Jan 12", status: "Cancelled", price: 1000, img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000" },
+  ];
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
+  const [bookings] = useState(mockBookings);
+  const [selectedBooking, setSelectedBooking] = useState(mockBookings[0]);
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
 
-  const loadBookings = async () => {
-    try {
-      const data = await getAllBookings();
-      setBookings(data);
-      // Set first booking as selected by default
-      if (data.length > 0 && !selectedBooking) {
-        setSelectedBooking(data[0]);
-      }
-    } catch (error) {
-      console.error('Failed to load bookings:', error);
+  // Filter Logic
+  const filteredBookings = bookings.filter(b => {
+    const matchesFilter = filter === 'All' || b.status === filter;
+    const matchesSearch = b.customerName.toLowerCase().includes(search.toLowerCase()) || 
+                          b.propertyTitle.toLowerCase().includes(search.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'Confirmed': return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+      case 'Pending': return 'text-amber-700 bg-amber-50 border-amber-200';
+      case 'Cancelled': return 'text-rose-700 bg-rose-50 border-rose-200';
+      default: return 'text-slate-600 bg-slate-50 border-slate-200';
     }
   };
-
-  const handleStatusChange = async (id, newStatus) => {
-    try {
-      await updateBookingStatus(id, newStatus);
-      loadBookings();
-      // Update selected booking if it's the one being changed
-      if (selectedBooking && selectedBooking.id === id) {
-        setSelectedBooking({ ...selectedBooking, status: newStatus });
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
-
-  // Mock data for booking details (replace with actual booking data)
-  const bookingDetails = selectedBooking ? {
-    title: selectedBooking.propertyTitle || "Capitol Site Prime Driveway - Secure Parking",
-    location: "Capitol Site, Cebu City (Near Fuente Osmeña)",
-    rating: 4.85,
-    reviews: 12,
-    price: 500,
-    days: 7,
-    checkIn: selectedBooking.bookingDate || "Jan 15",
-    checkOut: "Jan 21",
-    hostName: "Maria",
-    hostImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuD8LCnJPumwQIJOyLfmYi67AxVLW4JreyyENBtrUmcdeGpoNrzjdxBjiFdRIYNr53ZmXsQn90tIO7TO7i9x3lewMNSR3B-E3J0-JBGECRaRLjItcyDJPJj4VfnBzIZ4phK7Pf6de9Dy9sJwfrQoibIeI3iKY7dVvfupGtl-9dO6ErMUVwOcVeD6FrEIUGWvh6nssjHno7Jf6YVAv4Y61tYLD-c_MWOkeuW-cY94dVnLz_Mxv757CL076Ej2XJmoTMg065ctoKA-YzT6",
-    propertyImage: "https://lh3.googleusercontent.com/aida-public/AB6AXuAyBEf8lQNwDLPCXhkprGGUvTqbo20VA9l0PJ8KdGk9aiQPdBFtD4_As-5YqgjbVdc-YFLdovoh4qaF7pEaZbZgOj7GKpynOFpF4lTFKLbmzapLE4Ul8wkzUv-0zWztiHjm5QFoa2uMb36ZburiOl0cb7jRrIlBdhylvV1NHOGUyGIsioUifminTxRcpSub1Wm0H8i9XcSf6kQmosdd9nhVBCP148P7e08PQBBpbWLNyg5X3-vg9-WJgxwS4WoLQ3a8qGbXfEVziAQu",
-    customerName: selectedBooking.customerName || "Juan Dela Cruz",
-    contactNumber: selectedBooking.contactNumber || "+63 912 345 6789",
-    status: selectedBooking.status || "Pending"
-  } : null;
-
-  if (!selectedBooking && bookings.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-white">
-        <span className="material-symbols-outlined text-6xl mb-4 text-gray-400">calendar_month</span>
-        <h2 className="text-2xl font-bold mb-2">No Bookings Yet</h2>
-        <p className="text-gray-400">Bookings will appear here once customers make reservations.</p>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex flex-col h-full w-full bg-white text-[#111718] overflow-hidden">
-      {/* Header */}
-      <header className="w-full bg-white border-b border-[#dbe4e6] px-6 py-4 sticky top-0 z-20 flex justify-between items-center">
-        <nav className="flex text-sm text-[#618389]">
-          <span className="hover:text-[#13c8ec] transition-colors cursor-pointer">Admin</span>
-          <span className="mx-2">/</span>
-          <span className="hover:text-[#13c8ec] transition-colors cursor-pointer">Bookings</span>
-          <span className="mx-2">/</span>
-          <span className="text-[#111718] font-medium">{selectedBooking?.propertyTitle || 'Select a booking'}</span>
-        </nav>
-        <div className="flex gap-4">
-          <button className="flex items-center gap-1 text-sm font-medium text-[#111718] hover:bg-[#f6f8f8] px-3 py-2 rounded-lg transition-colors">
-            <span className="material-symbols-outlined text-lg">share</span> Share
-          </button>
-          <button className="flex items-center gap-1 text-sm font-medium text-[#111718] hover:bg-[#f6f8f8] px-3 py-2 rounded-lg transition-colors">
-            <span className="material-symbols-outlined text-lg">download</span> Export
-          </button>
-        </div>
-      </header>
+    <div className="flex h-screen bg-[#f8fafc] text-slate-900 font-inter overflow-hidden">
+      
+      {/* -----------------------
+          LEFT PANEL: SIDEBAR LIST
+          (Pure White Background)
+         ----------------------- */}
+      <aside className="w-full md:w-[400px] flex flex-col border-r border-slate-200 bg-white shrink-0 z-10 shadow-sm">
+        
+        {/* Sidebar Header */}
+        <div className="p-5 border-b border-slate-200 space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold tracking-tight text-slate-900">Bookings</h2>
+            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+              {filteredBookings.length} TOTAL
+            </span>
+          </div>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-y-auto bg-white scroll-smooth">
-        <div className="w-full max-w-[1120px] mx-auto p-6 flex flex-col gap-8 pb-20">
-          {/* Booking Selection Sidebar (Left) */}
-          <div className="flex gap-6">
-            <div className="w-80 shrink-0 border-r border-[#dbe4e6] pr-6">
-              <h3 className="text-lg font-bold mb-4">All Bookings ({bookings.length})</h3>
-              <div className="flex flex-col gap-2 max-h-[600px] overflow-y-auto">
-                {bookings.map((booking) => (
-                  <div
-                    key={booking.id}
-                    onClick={() => setSelectedBooking(booking)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                      selectedBooking?.id === booking.id
-                        ? 'border-[#13c8ec] bg-[#13c8ec]/10'
-                        : 'border-[#dbe4e6] hover:border-[#13c8ec]/50 hover:bg-[#f6f8f8]'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-sm">{booking.propertyTitle || 'Property'}</h4>
-                      <span className={`text-xs px-2 py-1 rounded ${
-                        booking.status === 'Confirmed' ? 'bg-green-100 text-green-800' :
-                        booking.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {booking.status}
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#618389] mb-1">{booking.customerName}</p>
-                    <p className="text-xs text-[#618389]">{booking.bookingDate}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {/* Search Bar */}
+          <div className="relative group">
+            <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 group-focus-within:text-slate-600 transition-colors text-sm">search</span>
+            <input 
+              type="text" 
+              placeholder="Search customer or property..." 
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm text-slate-900 focus:ring-2 focus:ring-slate-200 focus:border-slate-400 outline-none transition-all placeholder:text-slate-400"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-            {/* Booking Details (Right) */}
-            {bookingDetails ? (
-              <div className="flex-1">
-                <section className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl md:text-3xl font-extrabold leading-tight tracking-[-0.02em]">
-                      {bookingDetails.title}
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                      <div className="flex items-center gap-1 font-bold text-[#111718]">
-                        <span className="material-symbols-outlined text-base fill-current">star</span>
-                        {bookingDetails.rating}
-                      </div>
-                      <span className="text-[#111718] underline font-medium cursor-pointer">
-                        {bookingDetails.reviews} reviews
-                      </span>
-                      <span className="text-[#618389]">•</span>
-                      <span className="text-[#618389] font-medium">{bookingDetails.location}</span>
-                    </div>
-                  </div>
-
-                  {/* Main Image */}
-                  <div className="w-full h-[300px] md:h-[400px] rounded-xl overflow-hidden relative group">
-                    <div
-                      className="w-full h-full bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                      style={{ backgroundImage: `url("${bookingDetails.propertyImage}")` }}
-                    ></div>
-                    <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-[#111718] px-3 py-2 rounded-lg text-sm font-bold shadow-md hover:bg-white transition-colors flex items-center gap-2">
-                      <span className="material-symbols-outlined text-lg">grid_view</span>
-                      Show all photos
-                    </button>
-                  </div>
-                </section>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative mt-8">
-                  <div className="lg:col-span-2 flex flex-col gap-8">
-                    {/* Host Info */}
-                    <div className="flex justify-between items-center py-4 border-b border-[#dbe4e6]">
-                      <div className="flex flex-col">
-                        <h2 className="text-xl font-bold text-[#111718]">Booking by {bookingDetails.customerName}</h2>
-                        <p className="text-[#618389]">Contact: {bookingDetails.contactNumber}</p>
-                      </div>
-                      <div
-                        className="h-12 w-12 rounded-full bg-cover bg-center border border-[#dbe4e6]"
-                        style={{ backgroundImage: `url("${bookingDetails.hostImage}")` }}
-                      ></div>
-                    </div>
-
-                    {/* Features */}
-                    <div className="flex flex-col gap-4 py-2">
-                      <div className="flex gap-4">
-                        <span className="material-symbols-outlined text-[#111718] text-2xl">location_on</span>
-                        <div>
-                          <h3 className="font-bold text-[#111718]">Prime Sinulog Location</h3>
-                          <p className="text-[#618389] text-sm">Walking distance to the Grand Parade route and street parties.</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-4">
-                        <span className="material-symbols-outlined text-[#111718] text-2xl">security</span>
-                        <div>
-                          <h3 className="font-bold text-[#111718]">Secure & Gated</h3>
-                          <p className="text-[#618389] text-sm">Property is fully fenced with CCTV monitoring 24/7.</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-4">
-                        <span className="material-symbols-outlined text-[#111718] text-2xl">key</span>
-                        <div>
-                          <h3 className="font-bold text-[#111718]">Self Check-in</h3>
-                          <p className="text-[#618389] text-sm">Easily access the driveway with a provided key code for the gate.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <hr className="border-[#dbe4e6]" />
-
-                    {/* About */}
-                    <section>
-                      <h2 className="text-xl font-bold text-[#111718] mb-4">About this booking</h2>
-                      <div className="text-[#111718] leading-relaxed space-y-3">
-                        <p>
-                          Customer <strong>{bookingDetails.customerName}</strong> has booked this property for Sinulog week.
-                          The booking is currently <strong>{bookingDetails.status}</strong> and requires your attention.
-                        </p>
-                        <p>
-                          Contact the customer at <strong>{bookingDetails.contactNumber}</strong> to confirm details
-                          or make any necessary arrangements.
-                        </p>
-                      </div>
-                    </section>
-
-                    <hr className="border-[#dbe4e6]" />
-
-                    {/* Amenities */}
-                    <section>
-                      <h2 className="text-xl font-bold text-[#111718] mb-6">What this place offers</h2>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#618389]">local_parking</span>
-                          <span className="text-[#111718]">Free parking on premises</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#618389]">videocam</span>
-                          <span className="text-[#111718]">Security cameras on property</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#618389]">fence</span>
-                          <span className="text-[#111718]">Fully Fenced</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#618389]">light_mode</span>
-                          <span className="text-[#111718]">Floodlights at night</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#618389]">water_drop</span>
-                          <span className="text-[#111718]">Water access</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="material-symbols-outlined text-[#618389]">pets</span>
-                          <span className="text-[#111718]">Pet friendly (leashed)</span>
-                        </div>
-                      </div>
-                    </section>
-
-                    <hr className="border-[#dbe4e6]" />
-
-                    {/* Calendar */}
-                    <section>
-                      <h2 className="text-xl font-bold text-[#111718] mb-2">Booking Dates</h2>
-                      <p className="text-[#618389] text-sm mb-6">{bookingDetails.checkIn} - {bookingDetails.checkOut}, 2024</p>
-                      <div className="bg-[#f6f8f8] p-6 rounded-xl border border-[#dbe4e6]">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-bold text-lg">January 2024</h3>
-                          <div className="flex gap-2">
-                            <button className="p-1 hover:bg-gray-200 rounded-full">
-                              <span className="material-symbols-outlined">chevron_left</span>
-                            </button>
-                            <button className="p-1 hover:bg-gray-200 rounded-full">
-                              <span className="material-symbols-outlined">chevron_right</span>
-                            </button>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-                            <div key={day} className="text-[#618389] font-medium py-2">{day}</div>
-                          ))}
-                          {Array.from({ length: 31 }, (_, i) => {
-                            const day = i + 1;
-                            const isBooked = day >= 15 && day <= 21;
-                            const isStart = day === 15;
-                            const isEnd = day === 21;
-                            return (
-                              <div
-                                key={day}
-                                className={`py-3 ${
-                                  isBooked
-                                    ? isStart
-                                      ? 'bg-[#13c8ec] text-[#111718] font-bold rounded-l-full'
-                                      : isEnd
-                                      ? 'bg-[#13c8ec] text-[#111718] font-bold rounded-r-full'
-                                      : 'bg-[#13c8ec]/30 text-[#111718]'
-                                    : day < 15
-                                    ? 'text-gray-400 line-through'
-                                    : 'text-[#111718] hover:bg-gray-200 rounded-lg cursor-pointer'
-                                }`}
-                              >
-                                {day}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </section>
-
-                    {/* Host Section */}
-                    <section className="flex flex-col gap-4">
-                      <h2 className="text-xl font-bold text-[#111718]">Property Host</h2>
-                      <div className="bg-[#f6f8f8] p-6 rounded-xl border border-[#dbe4e6] flex flex-col md:flex-row gap-6 items-center md:items-start">
-                        <div className="flex flex-col items-center gap-2 min-w-[120px]">
-                          <div
-                            className="h-24 w-24 rounded-full bg-cover bg-center border-4 border-white shadow-sm"
-                            style={{ backgroundImage: `url("${bookingDetails.hostImage}")` }}
-                          ></div>
-                          <h3 className="font-bold text-lg">{bookingDetails.hostName}</h3>
-                          <div className="flex items-center gap-1 text-sm text-[#111718] font-bold">
-                            <span className="material-symbols-outlined text-sm fill-current">star</span>
-                            24 Reviews
-                          </div>
-                        </div>
-                        <div className="flex flex-col gap-3 flex-1">
-                          <div className="flex gap-2 text-sm text-[#618389]">
-                            <span className="flex items-center gap-1">
-                              <span className="material-symbols-outlined text-base">verified_user</span>
-                              Identity verified
-                            </span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <span className="material-symbols-outlined text-base">award_star</span>
-                              Superhost
-                            </span>
-                          </div>
-                          <p className="text-[#111718] text-sm leading-relaxed">
-                            Hi! I'm {bookingDetails.hostName}. I've been living in Capitol Site for over 20 years.
-                            My property is very secure and my family is always home to assist.
-                          </p>
-                        </div>
-                      </div>
-                    </section>
-                  </div>
-
-                  {/* Booking Card (Right Sidebar) */}
-                  <div className="lg:col-span-1 relative">
-                    <div className="sticky top-28 bg-white border border-[#dbe4e6] rounded-xl p-6 shadow-xl shadow-black/5">
-                      <div className="flex justify-between items-end mb-6">
-                        <div>
-                          <span className="text-2xl font-extrabold text-[#111718]">₱{bookingDetails.price}</span>
-                          <span className="text-[#618389]"> / day</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-[#111718] font-medium underline">
-                          <span className="material-symbols-outlined fill-current text-sm">star</span>
-                          {bookingDetails.rating}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col border border-[#dbe4e6] rounded-lg mb-4 overflow-hidden">
-                        <div className="grid grid-cols-2 border-b border-[#dbe4e6]">
-                          <div className="p-3 border-r border-[#dbe4e6]">
-                            <p className="text-[10px] font-bold uppercase text-[#111718]">Check-in</p>
-                            <p className="text-sm text-[#618389]">{bookingDetails.checkIn}</p>
-                          </div>
-                          <div className="p-3">
-                            <p className="text-[10px] font-bold uppercase text-[#111718]">Check-out</p>
-                            <p className="text-sm text-[#618389]">{bookingDetails.checkOut}</p>
-                          </div>
-                        </div>
-                        <div className="p-3 flex justify-between items-center">
-                          <div>
-                            <p className="text-[10px] font-bold uppercase text-[#111718]">Status</p>
-                            <p className="text-sm text-[#618389]">{bookingDetails.status}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2 mb-4">
-                        <button
-                          onClick={() => handleStatusChange(selectedBooking.id, 'Confirmed')}
-                          className="w-full bg-[#13c8ec] hover:bg-[#0ebcdb] text-[#111718] font-bold py-3 rounded-lg transition-all transform active:scale-95 shadow-md shadow-[#13c8ec]/20"
-                        >
-                          Approve Booking
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(selectedBooking.id, 'Cancelled')}
-                          className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg transition-all transform active:scale-95"
-                        >
-                          Cancel Booking
-                        </button>
-                      </div>
-
-                      <div className="flex flex-col gap-3 text-sm text-[#111718]">
-                        <div className="flex justify-between">
-                          <span className="underline decoration-[#dbe4e6]">₱{bookingDetails.price} x {bookingDetails.days} days</span>
-                          <span>₱{bookingDetails.price * bookingDetails.days}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="underline decoration-[#dbe4e6]">Sinulog Service Fee</span>
-                          <span>₱{Math.round(bookingDetails.price * bookingDetails.days * 0.1)}</span>
-                        </div>
-                      </div>
-
-                      <hr className="my-4 border-[#dbe4e6]" />
-
-                      <div className="flex justify-between font-bold text-lg text-[#111718]">
-                        <span>Total</span>
-                        <span>₱{bookingDetails.price * bookingDetails.days + Math.round(bookingDetails.price * bookingDetails.days * 0.1)}</span>
-                      </div>
-
-                      <div className="mt-6 p-3 bg-[#f6f8f8] rounded-lg text-xs text-[#618389] flex gap-2">
-                        <span className="material-symbols-outlined text-base">event_busy</span>
-                        <p>
-                          <strong>Free cancellation</strong> before Jan 10. Non-refundable during Sinulog week.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Things to Know */}
-                <section className="border-t border-[#dbe4e6] pt-10 mt-8">
-                  <h2 className="text-xl font-bold text-[#111718] mb-4">Things to know</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div>
-                      <h3 className="font-bold text-sm mb-2">Rental Rules</h3>
-                      <ul className="text-sm text-[#618389] space-y-2">
-                        <li>Check-in after 2:00 PM</li>
-                        <li>No loud music after 10:00 PM</li>
-                        <li>Max 2 vehicles per booking</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm mb-2">Safety</h3>
-                      <ul className="text-sm text-[#618389] space-y-2">
-                        <li>CCTV recording 24/7</li>
-                        <li>Well-lit driveway</li>
-                        <li>Emergency contacts provided</li>
-                      </ul>
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm mb-2">Cancellation Policy</h3>
-                      <p className="text-sm text-[#618389] leading-relaxed">
-                        Cancel before Jan 10 for a full refund. Review the Host's full cancellation policy for details.
-                      </p>
-                      <a className="text-sm font-bold underline mt-2 inline-block" href="#">Show more</a>
-                    </div>
-                  </div>
-                </section>
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-[#618389]">
-                <div className="text-center">
-                  <span className="material-symbols-outlined text-6xl mb-4">calendar_month</span>
-                  <p>Select a booking to view details</p>
-                </div>
-              </div>
-            )}
+          {/* Filter Tabs */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            {['All', 'Pending', 'Confirmed', 'Cancelled'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all whitespace-nowrap
+                  ${filter === status 
+                    ? 'bg-slate-900 text-white border-slate-900' 
+                    : 'text-slate-500 border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-700'}
+                `}
+              >
+                {status}
+              </button>
+            ))}
           </div>
         </div>
+
+        {/* Scrollable List */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-slate-50/50">
+          {filteredBookings.length > 0 ? (
+            filteredBookings.map((booking) => (
+              <div
+                key={booking.id}
+                onClick={() => setSelectedBooking(booking)}
+                className={`p-4 rounded-xl cursor-pointer border transition-all relative overflow-hidden group
+                  ${selectedBooking?.id === booking.id
+                    ? 'bg-white border-slate-300 shadow-md'
+                    : 'bg-white border-transparent hover:border-slate-200 hover:shadow-sm'}
+                `}
+              >
+                {/* Active Indicator Strip */}
+                {selectedBooking?.id === booking.id && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-slate-900"></div>
+                )}
+
+                <div className="flex justify-between items-start mb-2 pl-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getStatusColor(booking.status)}`}>
+                    {booking.status}
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">#{booking.id.toString().padStart(4, '0')}</span>
+                </div>
+                
+                <div className="pl-2">
+                  <h4 className={`font-bold text-sm mb-1 truncate ${selectedBooking?.id === booking.id ? 'text-slate-900' : 'text-slate-700'}`}>
+                    {booking.propertyTitle}
+                  </h4>
+                  <div className="flex justify-between items-center text-xs text-slate-500">
+                    <span className="flex items-center gap-1 font-medium">
+                      <span className="material-symbols-outlined text-[14px]">person</span>
+                      {booking.customerName}
+                    </span>
+                    <span>{booking.date}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-12 text-slate-400">
+              <span className="material-symbols-outlined text-4xl mb-2 opacity-50">search_off</span>
+              <p className="text-sm">No bookings found</p>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* -----------------------
+          RIGHT PANEL: DETAILS
+          (Soft Slate Background for contrast)
+         ----------------------- */}
+      <main className="flex-1 flex flex-col h-full bg-[#f8fafc] relative overflow-hidden">
+        
+        {selectedBooking ? (
+          <>
+            {/* Header / Toolbar */}
+            <header className="h-16 border-b border-slate-200 flex items-center justify-between px-6 bg-white/80 backdrop-blur z-10 sticky top-0">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-500">Booking ID</span>
+                <span className="text-slate-900 font-mono bg-slate-100 px-2 py-1 rounded border border-slate-200 font-bold">
+                  #{selectedBooking.id.toString().padStart(4, '0')}
+                </span>
+              </div>
+              
+              <div className="flex gap-3">
+                 <button className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-2 rounded-lg transition-colors hover:bg-slate-100">
+                   <span className="material-symbols-outlined text-sm">print</span> Print
+                 </button>
+                 <button className="flex items-center gap-2 text-xs font-bold text-white bg-slate-900 px-4 py-2 rounded-lg hover:bg-slate-800 transition-colors shadow-sm">
+                   <span className="material-symbols-outlined text-sm">edit</span> Edit Booking
+                 </button>
+              </div>
+            </header>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+              <div className="max-w-5xl mx-auto space-y-8">
+                
+                {/* 1. Property Hero */}
+                <div className="flex flex-col md:flex-row gap-6 items-start">
+                  <div className="w-full md:w-32 h-32 rounded-xl bg-cover bg-center border border-slate-200 shadow-sm shrink-0" 
+                       style={{ backgroundImage: `url("${selectedBooking.img}")` }}>
+                  </div>
+                  <div className="flex-1">
+                     <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">{selectedBooking.propertyTitle}</h1>
+                     <div className="flex items-center gap-4 text-sm text-slate-600">
+                        <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">location_on</span> Cebu City</span>
+                        <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm text-yellow-500 fill-current">star</span> 4.85</span>
+                     </div>
+                  </div>
+                  <div className={`px-4 py-2 rounded-lg border flex items-center gap-2 ${getStatusColor(selectedBooking.status)}`}>
+                    <span className="material-symbols-outlined text-lg">
+                      {selectedBooking.status === 'Confirmed' ? 'check_circle' : selectedBooking.status === 'Pending' ? 'schedule' : 'cancel'}
+                    </span>
+                    <span className="text-sm font-bold uppercase tracking-wide">{selectedBooking.status}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  
+                  {/* 2. Left Col: Guest & Trip Info */}
+                  <div className="lg:col-span-2 space-y-6">
+                    
+                    {/* Guest Card (White Paper Style) */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm">person</span> Guest Information
+                      </h3>
+                      <div className="flex items-center gap-4">
+                        <div className="size-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 font-bold text-lg">
+                          {selectedBooking.customerName.charAt(0)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-slate-900 font-bold text-lg">{selectedBooking.customerName}</p>
+                          <p className="text-sm text-slate-500">Verified Member</p>
+                        </div>
+                        <div className="flex gap-2">
+                           <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-700 transition-colors border border-slate-200">
+                             <span className="material-symbols-outlined text-lg">chat</span>
+                           </button>
+                           <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-700 transition-colors border border-slate-200">
+                             <span className="material-symbols-outlined text-lg">call</span>
+                           </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-6">
+                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <label className="text-xs text-slate-400 block mb-1 font-semibold">Email</label>
+                            <span className="text-sm text-slate-700 font-medium">juan@example.com</span>
+                         </div>
+                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <label className="text-xs text-slate-400 block mb-1 font-semibold">Phone</label>
+                            <span className="text-sm text-slate-700 font-medium">+63 912 345 6789</span>
+                         </div>
+                      </div>
+                    </div>
+
+                    {/* Timeline Card */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                         <span className="material-symbols-outlined text-sm">calendar_month</span> Trip Timeline
+                      </h3>
+                      <div className="flex items-center justify-between relative mt-6">
+                        {/* Connecting Line (Gray) */}
+                        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -z-10"></div>
+                        
+                        <div className="bg-white pr-4">
+                           <p className="text-xs text-slate-400 mb-1 font-semibold">Check-in</p>
+                           <p className="text-slate-900 font-bold text-lg">Jan 15</p>
+                           <p className="text-xs text-slate-500">2:00 PM</p>
+                        </div>
+                        <div className="px-3 py-1 bg-slate-100 border border-slate-200 rounded-full text-xs text-slate-600 font-bold shadow-sm">
+                           7 Nights
+                        </div>
+                        <div className="bg-white pl-4 text-right">
+                           <p className="text-xs text-slate-400 mb-1 font-semibold">Check-out</p>
+                           <p className="text-slate-900 font-bold text-lg">Jan 21</p>
+                           <p className="text-xs text-slate-500">11:00 AM</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Right Col: Payment Receipt (Professional Paper Look) */}
+                  <div className="lg:col-span-1">
+                    <div className="bg-white text-slate-900 rounded-xl overflow-hidden shadow-lg border border-slate-200">
+                      <div className="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+                         <h3 className="text-sm font-bold text-slate-600 uppercase">Payment Summary</h3>
+                         <span className="material-symbols-outlined text-slate-400 text-sm">receipt_long</span>
+                      </div>
+                      <div className="p-6 space-y-4">
+                        <div className="flex justify-between text-sm">
+                           <span className="text-slate-600">Base Price</span>
+                           <span className="font-medium text-slate-900">₱500.00</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-slate-500">
+                           <span>Duration</span>
+                           <span>7 Days</span>
+                        </div>
+                        
+                        {/* Dashed Line separator */}
+                        <div className="border-t-2 border-dashed border-slate-200 my-2"></div>
+                        
+                        <div className="flex justify-between text-sm">
+                           <span className="text-slate-600">Subtotal</span>
+                           <span className="font-medium text-slate-900">₱3,500.00</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-slate-500">
+                           <span>Service Fee</span>
+                           <span>₱350.00</span>
+                        </div>
+                        
+                        {/* Total Box */}
+                        <div className="bg-slate-900 text-white p-4 -mx-6 -mb-6 mt-4 flex justify-between items-center">
+                           <span className="text-sm font-medium opacity-80">Total Amount</span>
+                           <span className="text-xl font-bold">₱3,850.00</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="mt-6 flex flex-col gap-3">
+                       <button className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition-colors shadow-sm flex items-center justify-center gap-2">
+                         <span className="material-symbols-outlined text-sm">check</span> Approve Request
+                       </button>
+                       <button className="w-full py-3 bg-white border border-slate-300 text-slate-600 hover:text-rose-600 hover:border-rose-200 hover:bg-rose-50 font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+                         <span className="material-symbols-outlined text-sm">close</span> Decline
+                       </button>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+            <div className="bg-white p-6 rounded-full shadow-sm mb-4">
+               <span className="material-symbols-outlined text-4xl text-slate-300">description</span>
+            </div>
+            <p className="font-medium text-slate-500">Select a booking to view details</p>
+          </div>
+        )}
       </main>
     </div>
   );
