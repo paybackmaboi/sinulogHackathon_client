@@ -10,7 +10,7 @@ const Footer = () => {
               <div className="size-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
                 <span className="material-symbols-outlined text-xl">apartment</span>
               </div>
-              <h2 className="text-[#111418] dark:text-white text-lg font-bold">EstateBook</h2>
+              <h2 className="text-[#111418] dark:text-white text-lg font-bold">GO4thBook</h2>
             </div>
             <p className="text-[#617589] dark:text-gray-400 text-sm">
               Building the future of travel and living. One property at a time.
@@ -45,7 +45,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="border-t border-[#f0f2f4] dark:border-[#293038] pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-sm text-[#617589] dark:text-gray-500">© 2023 EstateBook Inc. All rights reserved.</p>
+          <p className="text-sm text-[#617589] dark:text-gray-500">© 2023 GO4th Inc. All rights reserved.</p>
           <div className="flex gap-6 text-[#617589] dark:text-gray-500">
             <a className="hover:text-primary" href="#"><span class="material-symbols-outlined">public</span></a>
             <a className="hover:text-primary" href="#"><span class="material-symbols-outlined">alternate_email</span></a>

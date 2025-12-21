@@ -5,7 +5,7 @@ export const HowItWorks = () => {
     <section className="w-full bg-white dark:bg-[#1a222b] py-20 px-4 sm:px-10 border-y border-[#f0f2f4] dark:border-[#293038]">
       <div className="max-w-[1280px] mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-[#111418] dark:text-white text-3xl font-bold tracking-tight mb-4">How EstateBook Works</h2>
+          <h2 className="text-[#111418] dark:text-white text-3xl font-bold tracking-tight mb-4">How GO4thBook Works</h2>
           <p className="text-[#617589] dark:text-gray-400 text-lg">Your journey to finding the perfect property or hosting travelers is just a few steps away.</p>
         </div>
         <div className="grid md:grid-cols-3 gap-12 relative">
@@ -39,7 +39,7 @@ export const Benefits = () => {
           <div>
             <span className="text-primary font-bold tracking-wider text-sm uppercase mb-2 block">Why Choose Us</span>
             <h2 className="text-[#111418] dark:text-white text-3xl md:text-4xl font-bold leading-tight mb-4">
-              Experience the Difference with EstateBook
+              Experience the Difference with GO4thBook
             </h2>
             <p className="text-[#617589] dark:text-gray-400 text-lg leading-relaxed">
               Whether you're a traveler seeking adventure or a host looking to maximize earnings, our platform offers unmatched benefits tailored to your needs.
@@ -100,7 +100,7 @@ export const Testimonials = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { text: "EstateBook made our family vacation planning effortless. The property was exactly as described, and the booking process was seamless.", name: "Sarah Jenkins", role: "Traveler from UK", img: "https://i.pravatar.cc/150?img=5" },
+            { text: "GO4thBook made our family vacation planning effortless. The property was exactly as described, and the booking process was seamless.", name: "Sarah Jenkins", role: "Traveler from UK", img: "https://i.pravatar.cc/150?img=5" },
             { text: "As a property owner, I appreciate the transparency and the quality of guests I find through this platform. Highly recommended!", name: "Michael Chen", role: "Superhost in Toronto", img: "https://i.pravatar.cc/150?img=11" },
             { text: "The customer support team went above and beyond when we needed to change our dates last minute. Fantastic service.", name: "Elena Rodriguez", role: "Traveler from Spain", img: "https://i.pravatar.cc/150?img=9" }
           ].map((review, idx) => (
@@ -133,7 +133,7 @@ export const CTA = () => {
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="relative z-10 max-w-2xl">
           <h2 className="text-white text-3xl md:text-5xl font-black mb-6 tracking-tight">Ready to start your journey?</h2>
-          <p className="text-white/90 text-lg md:text-xl mb-8 font-medium">Join millions of travelers and hosts on EstateBook today. Sign up now and get $50 off your first booking.</p>
+          <p className="text-white/90 text-lg md:text-xl mb-8 font-medium">Join millions of travelers and hosts on GO4thBook today. Sign up now and get $50 off your first booking.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button className="px-8 py-4 bg-white text-primary font-bold rounded-xl shadow-lg hover:bg-gray-50 transition-colors text-lg">
               Get Started
