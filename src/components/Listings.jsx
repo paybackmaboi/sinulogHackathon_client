@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { collection, getDocs } from 'firebase/firestore'; 
+import { db } from '../firebase'; // Import your Firebase DB connection
 
 const Listings = () => {
   const [properties, setProperties] = useState([]);
 
-  // Static fallback data matching the design
+  // Static fallback data (Used if Firebase is empty or fails)
   const staticProperties = [
     {
       id: 1,
@@ -41,17 +42,36 @@ const Listings = () => {
   ];
 
   useEffect(() => {
-    // Attempt to fetch from API, otherwise use static data
-    axios.get('http://localhost:5000/api/properties')
-      .then(res => {
-        if (res.data && res.data.length > 0) {
-            // Map API data to new design structure if necessary
-            setProperties(res.data);
+    const fetchProperties = async () => {
+      try {
+        // 1. Reference the 'properties' collection in your Firestore
+        const propertiesCollection = collection(db, "properties");
+        
+        // 2. Get the data (Snapshot)
+        const snapshot = await getDocs(propertiesCollection);
+        
+        // 3. Map the data to an array
+        const propertyList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        // 4. If database has items, use them. If empty, use static data.
+        if (propertyList.length > 0) {
+          setProperties(propertyList);
+          console.log("Loaded from Firebase:", propertyList);
         } else {
-            setProperties(staticProperties);
+          console.log("Firebase is empty, using static fallback.");
+          setProperties(staticProperties);
         }
-      })
-      .catch(() => setProperties(staticProperties));
+
+      } catch (error) {
+        console.error("Error connecting to Firebase:", error);
+        setProperties(staticProperties); // Fallback on error
+      }
+    };
+
+    fetchProperties();
   }, []);
 
   return (
@@ -85,7 +105,7 @@ const Listings = () => {
                 </h3>
                 <div className="flex items-center gap-1 text-[#111418] dark:text-white font-medium text-sm">
                   <span className="material-symbols-outlined text-primary text-base">star</span>
-                  {prop.rating || "4.9"}
+                  {prop.rating || "New"}
                 </div>
               </div>
               <p className="text-[#617589] dark:text-gray-400 text-sm">{prop.location || "City, Country"}</p>
